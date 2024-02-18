@@ -2,9 +2,9 @@ import Imap from "imap";
 import LibParser from "mailparser";
 import fs from "fs";
 import { inspect } from "util";
-import config from "./connect";
+import config from "./connect.js";
 
-const MailParser = LibParser.MailParser;
+const simpleParser = LibParser.simpleParser;
 var imap = new Imap({
   user: config.user,
   password: config.password,
@@ -26,27 +26,22 @@ imap.once("ready", function () {
     if (err) throw err;
 
     var f = imap.seq.fetch("30", {
-      bodies: "HEADER.FIELDS (FROM TO SUBJECT DATE)",
+      bodies: "",
       struct: true,
     });
     f.on("message", function (msg, seqno) {
       console.log("Message #%d", seqno);
       var prefix = "(#" + seqno + ") ";
       msg.on("body", function (stream, info) {
-        var buffer = "";
-        stream.on("data", function (chunk) {
-          buffer += chunk.toString("utf8");
-        });
-        stream.once("end", function () {
-          console.log(
-            prefix + "Parsed header: %s",
-            inspect(Imap.parseHeader(buffer))
-          );
+        simpleParser(stream, (err, mail) => {
+          // console.log(prefix + mail.subject);
+          // console.log(prefix + mail.text);
+          console.log(mail.html);
         });
       });
-      msg.once("attributes", function (attrs) {
-        console.log(prefix + "Attributes: %s", inspect(attrs, false, 8));
-      });
+      // msg.once("attributes", function (attrs) {
+      //   console.log(prefix + "Attributes: %s", inspect(attrs, false, 8));
+      // });
       msg.once("end", function () {
         console.log(prefix + "Finished");
       });

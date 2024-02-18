@@ -1,5 +1,5 @@
 #SHCustom
-connect.js
+src/shConfigEmail.ts
 
 # Logs
 logs
